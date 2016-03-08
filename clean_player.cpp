@@ -1,5 +1,5 @@
-# Small edit - testing git commit
 #include "player.h"
+
 
 /*
  * Constructor for the player; initialize everything here. The side your AI is
