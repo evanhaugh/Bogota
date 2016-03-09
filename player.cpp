@@ -1,13 +1,71 @@
 #include "player.h"
 
+// adjacent_to_edge function (returns more quickly by terminating at the first met condition)
+bool adjacent_to_edge(Move* m)
+{
+	int x = m->x;
+	int y = m->y;
+	if(x == 0)
+	{
+		if(y == 1 || y == 6)
+		{
+			return true;
+		}
+	}
+	if (x == 1)
+	{
+		if(y == 1 || y == 0 || y == 6 || y == 7)
+		{
+			return true;
+		}
+	}
+	if (x == 6)
+	{
+		if(y == 7 || y == 6 || y == 1 || y == 0)
+		{
+			return true;
+		}
+	}
+	if (x == 7)
+		if (y == 6 || y == 1)
+		{
+			return true;
+		}
+	return false;
+}
 // Constructor for ScoredMove type
-ScoredMove::ScoredMove(Move * move, Side side)
+ScoredMove::ScoredMove(Move * move, Side side, Board * gameboard)
 {
 	/* I initialize m in this convulted way so that the pointer it is given
 	 * can be safely freed in the program to save memory.
 	 */
 	this->m = new Move(move->x, move->y);
 	this->score = 0;
+	// Corners have 3 added to their score.
+	if((m->x == 0 && m->y == 0) || (m->x == 0 && m->y == 7) || (m->x == 7 && m->y == 0) || (m->x == 7 && m->y == 7))
+	{
+		this->score += 5;
+	}
+	
+	// Edges have 1 added to their score.
+	if(m->x == 0 || m->x == 7 || m->y == 0 || m->y == 7)
+	{
+		this->score += 3;
+	}
+	
+	// Spaces adjacent to an edge have three subtracted from their score (they grant access to corners).
+	if(adjacent_to_edge(m))
+	{
+		this->score -= 5;
+	}
+	
+	// One point added for each opponent piece that is flipped.
+	Board * copiedboard = gameboard->copy();
+	int count_before = copiedboard->count(side);
+	copiedboard->doMove(m, side);
+	int count_after = copiedboard->count(side);
+	delete copiedboard;
+	this->score += (count_after - count_before);
 }
 
 /*
@@ -74,7 +132,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 	}
 	
 	// Calculate possible moves, and put them into the PossibleMoves vector
-	//this->PossibleMoves = new std::vector<ScoredMove*>();
+	this->PossibleMoves = new std::vector<ScoredMove*>();
 	for (int x = 0; x < 8; x++)
 	{
 		for (int y = 0; y < 8; y++)
@@ -83,15 +141,21 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 			if(this->gameboard->checkMove(testmove, this->side))
 			{
 				// If move is valid, append to possible moves vector.
-				//this->PossibleMoves->push_back(new ScoredMove(testmove, this->side));
+				this->PossibleMoves->push_back(new ScoredMove(testmove, this->side, gameboard));
 				//std::cerr << "Move: x: " << testmove->x << " y: " << testmove->y << std::endl;
-				this->gameboard->doMove(testmove, this->side);
-				return testmove;
 			}
 			delete testmove;
 		}
 	}
 	// Once possible moves have been determined, identify and make the highest scoring one.
-	
-	return NULL;
+	ScoredMove * bestmove = (*(PossibleMoves))[0];
+	for(unsigned int i = 1; i < PossibleMoves->size(); i++)
+	{
+		if ((*(PossibleMoves))[i]->score > bestmove->score)
+		{
+			bestmove = (*(PossibleMoves))[i];
+		}
+	}
+	this->gameboard->doMove(bestmove->m, this->side);
+	return bestmove->m;
 }

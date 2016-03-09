@@ -9,7 +9,7 @@ using namespace std;
 
 class ScoredMove {
 public:
-	ScoredMove(Move * move, Side side);
+	ScoredMove(Move * move, Side side, Board * gameboard);
 	Move * m;
 	int score;
 };
