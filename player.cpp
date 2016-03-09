@@ -1,38 +1,5 @@
 #include "player.h"
 
-// adjacent_to_edge function (returns more quickly by terminating at the first met condition)
-bool adjacent_to_edge(Move* m)
-{
-	int x = m->x;
-	int y = m->y;
-	if(x == 0)
-	{
-		if(y == 1 || y == 6)
-		{
-			return true;
-		}
-	}
-	if (x == 1)
-	{
-		if(y == 1 || y == 0 || y == 6 || y == 7)
-		{
-			return true;
-		}
-	}
-	if (x == 6)
-	{
-		if(y == 7 || y == 6 || y == 1 || y == 0)
-		{
-			return true;
-		}
-	}
-	if (x == 7)
-		if (y == 6 || y == 1)
-		{
-			return true;
-		}
-	return false;
-}
 // Constructor for ScoredMove type
 ScoredMove::ScoredMove(Move * move, Side side, Board * gameboard)
 {
@@ -41,31 +8,56 @@ ScoredMove::ScoredMove(Move * move, Side side, Board * gameboard)
 	 */
 	this->m = new Move(move->x, move->y);
 	this->score = 0;
-	// Corners have 3 added to their score.
-	if((m->x == 0 && m->y == 0) || (m->x == 0 && m->y == 7) || (m->x == 7 && m->y == 0) || (m->x == 7 && m->y == 7))
-	{
-		this->score += 5;
-	}
-	
-	// Edges have 1 added to their score.
-	if(m->x == 0 || m->x == 7 || m->y == 0 || m->y == 7)
-	{
-		this->score += 3;
-	}
-	
-	// Spaces adjacent to an edge have three subtracted from their score (they grant access to corners).
-	if(adjacent_to_edge(m))
-	{
-		this->score -= 5;
-	}
-	
-	// One point added for each opponent piece that is flipped.
 	Board * copiedboard = gameboard->copy();
-	int count_before = copiedboard->count(side);
 	copiedboard->doMove(m, side);
-	int count_after = copiedboard->count(side);
+	
+	// Establish an otherside variable
+	Side otherside = BLACK;
+	if (side == BLACK)
+	{
+		otherside = WHITE;
+	}
+	
+	// Determine all possible moves for opponent's piece.
+	
+	std::vector<Move *> OpponentMoves;
+	for (int x = 0; x < 8; x++)
+	{
+		for (int y = 0; y < 8; y++)
+		{
+			Move * testmove = new Move(x,y);
+			if(gameboard->checkMove(testmove, otherside))
+			{
+				OpponentMoves.push_back(new Move(x, y));
+			}
+			delete testmove;
+		}
+	}
+	Move * opponent_bestmove = NULL;
+	int opponent_bestmove_score = -9999;
+	
+	// Iterate over all possible opponent moves, finding the one most in their favor.
+	for(unsigned int i = 0; i < OpponentMoves.size(); i++)
+	{
+		Board * tempboard = gameboard->copy();
+		tempboard->doMove(OpponentMoves[i], otherside);
+		int pd = copiedboard->count(otherside) - copiedboard->count(side);
+		if (pd > opponent_bestmove_score)
+		{
+			opponent_bestmove = new Move((OpponentMoves[i])->x, (OpponentMoves[i])->y);
+		}
+		delete tempboard;
+		delete OpponentMoves[i];
+		
+	}
+	
+	// Perform the opponent's best move.
+	copiedboard->doMove(opponent_bestmove, otherside);
+	
+	// Calculate piece difference after opponent's move (this will be the move's score).
+	int piece_difference = copiedboard->count(side) - copiedboard->count(otherside);
 	delete copiedboard;
-	this->score += (count_after - count_before);
+	this->score = (piece_difference);
 }
 
 /*
