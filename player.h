@@ -9,7 +9,8 @@ using namespace std;
 
 class ScoredMove {
 public:
-	ScoredMove(Move * move, Side side, Board * gameboard);
+	ScoredMove(Move *, int);
+	~ScoredMove();
 	Move * m;
 	int score;
 };
@@ -26,7 +27,6 @@ public:
 	Board * gameboard;
 	Move * opponent_move;
     Move *doMove(Move *opponentsMove, int msLeft);
-	std::vector<ScoredMove*> * PossibleMoves;
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
