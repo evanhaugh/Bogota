@@ -10,6 +10,18 @@ Board::Board() {
     taken.set(4 + 8 * 4);
     black.set(4 + 8 * 3);
     black.set(3 + 8 * 4);
+	for(int a = 0; a < 8; a ++)
+	{
+		for(int b = 0; b < 8; b++)
+		{
+			coins[a][b] = 0;
+		}
+	}
+	coins[3][3] = 2;
+	coins[4][4] = 2;
+	coins[3][4] = 1;
+	coins[4][3] = 1;
+	
 }
 
 /*
@@ -132,6 +144,15 @@ void Board::doMove(Move *m, Side side) {
                 y += dy;
                 while (onBoard(x, y) && get(other, x, y)) {
                     set(side, x, y);
+					// Sets internal coins variable.
+					if(side == BLACK)
+					{
+						coins[x][y] = 1;
+					}
+					else
+					{
+						coins[x][y] = 2;
+					}
                     x += dx;
                     y += dy;
                 }
@@ -177,4 +198,22 @@ void Board::setBoard(char data[]) {
             taken.set(i);
         }
     }
+}
+	
+int Board::countMoves(Side side)
+{
+	int num_moves = 0;
+	for(int x = 0; x < 8; x++)
+	{
+		for(int y = 0; y < 8; y ++)
+		{
+			Move * testmove = new Move(x, y);
+			if(this->checkMove(testmove, side)){
+				num_moves ++;
+			
+			}
+			delete testmove;
+		}
+	}
+	return num_moves;
 }

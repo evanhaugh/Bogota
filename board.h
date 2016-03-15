@@ -28,6 +28,8 @@ public:
     int count(Side side);
     int countBlack();
     int countWhite();
+	int countMoves(Side side);
+	int coins[8][8];
 
     void setBoard(char data[]);
 };

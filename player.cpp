@@ -65,41 +65,90 @@ ScoredMove::~ScoredMove(){
 Move* bestMove(std::vector<Move *>* PossibleMoves, Board * gameboard, Side side, Side otherside)
 {
 	/* This function takes a vector of possible moves and returns the lowest scoring one.
+	 * This function should
 	 */
 	 ScoredMove* best = new ScoredMove((*PossibleMoves)[0], -9999);
-	 
-	 // Score is simply end difference in number of pieces after another turn by opponent.
+	 // Score is simply end difference in number of pieces after another turn by opponent.a
 	 for(unsigned int i = 0; i < PossibleMoves->size(); i++)
 	 {
-		 // Initial calculation of score from mingain formula.
-		 int score = mingain((*PossibleMoves)[i], gameboard, side, otherside);
+		 // SCORE CALCULATION FOR A MOVE BEGINS HERE
+		 float score;
+		 // Coin difference begins here
+		 Board * testboard = gameboard->copy();
+		 testboard->doMove((*PossibleMoves)[i], side);
+		 float coindiff = (testboard->count(side) - testboard->count(otherside)) / (testboard->count(side)+testboard->count(otherside));
+		 coindiff *= 2500;
 		 
-		 // Adding a little bit of heuristics:
-		 // If corner piece, add 20 to score.
-		 int x = (*PossibleMoves)[i]->x;
-		 int y = (*PossibleMoves)[i]->y;
+		 score = coindiff;
+		 // Coin difference ends here
 		 
-		 if(x == 0 && y == 0){
-			 score += 20;
+		 // Mobility score evaluation begins here
+		 int yourmoves = testboard->countMoves(side);
+		 int theirmoves = testboard->countMoves(otherside);
+		 if(yourmoves != 0 && theirmoves != 0)
+		 {
+			 float mobScore = (yourmoves - theirmoves) / (yourmoves + theirmoves);
+			 mobScore *= 500;
+			 score += mobScore;
 		 }
-		 if(x == 7 && y == 0){
-			 score += 20;
-		 }
-		 if(x == 0 && y == 7){
-			 score += 20;
-		 }
-		 if(x == 7 && y == 7){
-			 score += 20;
-		 }
-		 // Corner stuff ends here
-		 // If row, add 5.
+		 // Mobility score evaluation ends here
 		 
-		 if(x == 0 || y == 0 || x == 7 || y == 7){
-			 score += 5;
+		 // Corners captured count starts here
+		 float wcorners = 0;
+		 float bcorners = 0;
+		 if(testboard->coins[0][0] == 1)
+		 {
+			 bcorners ++;
 		 }
+		 else if(testboard->coins[0][0] == 2)
+		 {
+			 wcorners ++;
+		 }
+		 if(testboard->coins[0][7] == 1)
+		 {
+			 bcorners ++;
+		 }
+		 else if(testboard->coins[0][7] == 2)
+		 {
+			 wcorners ++;
+		 }
+		 if(testboard->coins[7][0] == 1)
+		 {
+			 bcorners ++;
+		 }
+		 else if(testboard->coins[7][0] == 2)
+		 {
+			 wcorners ++;
+		 }
+		 if(testboard->coins[7][7] == 1)
+		 {
+			 bcorners ++;
+		 }
+		 else if(testboard->coins[7][7] == 2)
+		 {
+			 wcorners ++;
+		 }
+		 if (side == BLACK)
+		 {
+			float cornerscore = (bcorners - wcorners) / (bcorners + wcorners);
+			 cornerscore *= 3000;
+			 score += cornerscore;
+		 }
+		 else
+		{
+			 float cornerscore = (wcorners - bcorners) / (bcorners + wcorners);
+			 cornerscore *= 3000;
+			 score += cornerscore;
+		 }
+		 // Corners captured count ends here
 		 
-		 // Row stuff ends here.
+		 // Stability count starts here
 		 
+		 
+		 // Stability count ends here
+		 
+		 // SCORE CALCULATION FOR A MOVE ENDS HERE
+		 delete testboard;
 		 if (score > best->score)
 		 {
 			 best = new ScoredMove(new Move((*PossibleMoves)[i]->x, (*PossibleMoves)[i]->y), score);
